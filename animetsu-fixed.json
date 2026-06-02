@@ -11,7 +11,7 @@
   "quality": "1080p",
   "baseUrl": "https://animetsu.to/",
   "searchBaseUrl": "https://animetsu.to/",
-  "scriptUrl": "https://raw.githubusercontent.com/2011aarav/animetsu-fixed/refs/heads/main/animetsu-fixed.js",
+  "scriptUrl": "https://raw.githubusercontent.com/2011aarav/animetsu-fixed/main/animetsu-fixed.js",
   "asyncJS": true,
   "type": "anime",
   "softsub": true,
