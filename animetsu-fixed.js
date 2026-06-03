@@ -1,72 +1,85 @@
 async function searchResults(keyword) {
     const results = [];
     const headers = {
-        'Referer': 'https://animetsu.live/',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'Referer': 'https://animetsu.net/',
+        'Origin': 'https://animetsu.net',
+        'User-Agent': 'Mozilla/5.0'
     };
 
     const encodedKeyword = encodeURIComponent(keyword);
-    const response = await fetchv2(`https://animetsu.live/v2/api/anime/search/?query=${encodedKeyword}`, headers);
+
+    const response = await fetchv2(
+        `https://animetsu.net/v2/api/anime/search/?query=${encodedKeyword}`,
+        headers
+    );
+
     const json = await response.json();
 
-    json.results.forEach(anime => {
-        const title = anime.title.english || anime.title.romaji || anime.title.native || "Unknown Title";
-        const image = anime.cover_image.large;
-        const href = `${anime.id}`;
+    if (json?.results) {
+        json.results.forEach(anime => {
+            const title =
+                anime.title?.english ||
+                anime.title?.romaji ||
+                anime.title?.native ||
+                "Unknown Title";
 
-        if (title && href && image) {
+            const image = anime.cover_image?.large || "";
+            const href = `${anime.id}`;
+
             results.push({
-                title: title,
-                image: image,
-                href: href
-            });
-        } else {
-            console.error("Missing or invalid data in search result item:", {
                 title,
-                href,
-                image
+                image,
+                href
             });
-        }
-    });
+        });
+    }
 
     return JSON.stringify(results);
 }
 
 async function extractDetails(id) {
-    const results = [];
     const headers = {
-        'Referer': 'https://animetsu.live/',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'Referer': 'https://animetsu.net/',
+        'Origin': 'https://animetsu.net',
+        'User-Agent': 'Mozilla/5.0'
     };
 
-    const response = await fetchv2(`https://animetsu.live/v2/api/anime/info/${id}`, headers);
+    const response = await fetchv2(
+        `https://animetsu.net/v2/api/anime/info/${id}`,
+        headers
+    );
+
     const json = await response.json();
 
-    const description = cleanHtmlSymbols(json.description) || "No description available"; 
-
-    results.push({
-        description: description.replace(/<br>/g, ''),
-        aliases: json.synonyms ? json.synonyms.join(', ') : 'N/A',
+    const results = [{
+        description: cleanHtmlSymbols(json.description || "No description available"),
+        aliases: json.synonyms?.join(', ') || 'N/A',
         airdate: json.start_date || 'N/A'
-    });
+    }];
 
     return JSON.stringify(results);
 }
 
 async function extractEpisodes(id) {
-    const results = [];
     const headers = {
-        'Referer': 'https://animetsu.live/',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'Referer': 'https://animetsu.net/',
+        'Origin': 'https://animetsu.net',
+        'User-Agent': 'Mozilla/5.0'
     };
 
-    const response = await fetchv2(`https://animetsu.live/v2/api/anime/eps/${id}`, headers);
+    const response = await fetchv2(
+        `https://animetsu.net/v2/api/anime/eps/${id}`,
+        headers
+    );
+
     const json = await response.json();
+
+    const results = [];
 
     for (const ep of json) {
         results.push({
             number: ep.ep_num,
-            href: `&id=${id}&num=${ep.ep_num}`
+            href: `?id=${id}&num=${ep.ep_num}`
         });
     }
 
@@ -75,8 +88,9 @@ async function extractEpisodes(id) {
 
 async function extractStreamUrl(slug) {
     const headers = {
-        'Referer': 'https://animetsu.live/',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'Referer': 'https://animetsu.net/',
+        'Origin': 'https://animetsu.net',
+        'User-Agent': 'Mozilla/5.0'
     };
 
     const id = (slug.match(/[?&]id=([^&]+)/) || [])[1];
@@ -85,93 +99,95 @@ async function extractStreamUrl(slug) {
     const streams = [];
 
     try {
-        const serverListRes = await fetchv2(`https://animetsu.live/v2/api/anime/servers/${id}/${num}`, headers);
+        const serverListRes = await fetchv2(
+            `https://animetsu.net/v2/api/anime/servers/${id}/${num}`,
+            headers
+        );
+
         const serverList = await serverListRes.json();
 
-        const promises = [];
         for (const server of serverList) {
             for (const subType of ['sub', 'dub']) {
-                promises.push((async () => {
-                    try {
-                        const url = `https://animetsu.live/v2/api/anime/oppai/${id}/${num}?server=${server.id}&source_type=${subType}`;
-                        const res = await fetchv2(url, headers);
-                        const data = await res.json();
+                try {
+                    const url =
+                        `https://animetsu.net/v2/api/anime/oppai/${id}/${num}` +
+                        `?server=${server.id}&source_type=${subType}`;
 
-                        if (data?.sources?.length) {
-                            for (const source of data.sources) {
-                                let streamUrl = `https://swiftstream.top/proxy${source.url}`;
-                                let quality = source.quality;
+                    const res = await fetchv2(url, headers);
+                    const data = await res.json();
 
-                                if (server.id === 'kite') {
-                                    try {
-                                        const m3u8Res = await fetchv2(streamUrl, headers);
-                                        const m3u8Content = await m3u8Res.text();
-                                        const lines = m3u8Content.split('\n').filter(line => line.trim() !== '');
-                                        const targetLine = lines.find(line => !line.startsWith('#'));
-                                        if (targetLine) {
-                                            streamUrl = `https://swiftstream.top/proxy/oppai/kite/${targetLine.trim()}`;
-                                        }
-                                        if (quality.toLowerCase() === 'master') {
-                                            quality = '1080p';
-                                        }
-                                    } catch (e) {
-                                        console.error("Error rewriting kite URL:", e);
-                                    }
-                                }
+                    if (data?.sources?.length) {
+                        for (const source of data.sources) {
+                            let streamUrl =
+                                source.url.startsWith('http')
+                                    ? source.url
+                                    : `https://swiftstream.top/proxy${source.url}`;
 
-                                streams.push({
-                                    title: `${server.id} - ${quality} - ${subType.toUpperCase()}`,
-                                streamUrl: streamUrl,
-                                    url: streamUrl,
-                                    downloadUrl: streamUrl,
-                                    type: "hls",
-                                    headers: {
-                                            'Referer': 'https://animetsu.live/',
-                                            'Origin': 'https://animetsu.live',
-                                            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    }
-});
+                            let quality = source.quality || 'Auto';
+
+                            if (
+                                server.id === 'kite' &&
+                                quality.toLowerCase() === 'master'
+                            ) {
+                                quality = '1080p';
                             }
+
+                            streams.push({
+                                title: `${server.id} - ${quality} - ${subType.toUpperCase()}`,
+                                streamUrl: streamUrl,
+                                url: streamUrl,
+                                downloadUrl: streamUrl,
+                                type: "hls",
+                                headers: {
+                                    'Referer': 'https://animetsu.net/',
+                                    'Origin': 'https://animetsu.net',
+                                    'User-Agent': 'Mozilla/5.0'
+                                }
+                            });
                         }
-                    } catch (e) {
-                        console.error(`Error fetching streams for server ${server.id} (${subType}):`, e);
                     }
-                })());
+                } catch (e) {
+                    console.error(
+                        `Error fetching ${server.id} (${subType}):`,
+                        e
+                    );
+                }
             }
         }
-
-        await Promise.all(promises);
     } catch (e) {
         console.error("Error fetching server list:", e);
     }
 
-    const serverOrder = { 'pahe': 1, 'meg': 2, 'kite': 3 };
-    const qualityOrder = (q) => {
+    const serverOrder = {
+        pahe: 1,
+        meg: 2,
+        kite: 3
+    };
+
+    const qualityOrder = q => {
+        q = q.toLowerCase();
         if (q.includes('1080')) return 1;
         if (q.includes('720')) return 2;
         if (q.includes('480')) return 3;
         if (q.includes('360')) return 4;
-        if (q.includes('master')) return 5;
-        return 6;
+        return 5;
     };
 
     streams.sort((a, b) => {
-        const partsA = a.title.split(' - ');
-        const partsB = b.title.split(' - ');
-        
-        const sA = partsA[0].toLowerCase();
-        const sB = partsB[0].toLowerCase();
-        const qA = partsA[1].toLowerCase();
-        const qB = partsB[1].toLowerCase();
+        const aParts = a.title.split(' - ');
+        const bParts = b.title.split(' - ');
 
-        const qOrderA = qualityOrder(qA);
-        const qOrderB = qualityOrder(qB);
+        const aServer = serverOrder[aParts[0].toLowerCase()] || 99;
+        const bServer = serverOrder[bParts[0].toLowerCase()] || 99;
 
-        if (qOrderA !== qOrderB) return qOrderA - qOrderB;
-        
-        const sOrderA = serverOrder[sA] || 99;
-        const sOrderB = serverOrder[sB] || 99;
-        return sOrderA - sOrderB;
+        const aQuality = qualityOrder(aParts[1]);
+        const bQuality = qualityOrder(bParts[1]);
+
+        if (aQuality !== bQuality) {
+            return aQuality - bQuality;
+        }
+
+        return aServer - bServer;
     });
 
     const finalStreams = streams.map((s, index) => ({
@@ -179,16 +195,11 @@ async function extractStreamUrl(slug) {
         title: `[Server ${index + 1}] ${s.title}`
     }));
 
-    const final = {
+    return JSON.stringify({
         streams: finalStreams,
         subtitle: ""
-    };
-
-    return JSON.stringify(final);
+    });
 }
-
-
-
 
 function cleanHtmlSymbols(string) {
     if (!string) return "";
@@ -197,10 +208,10 @@ function cleanHtmlSymbols(string) {
         .replace(/&#8217;/g, "'")
         .replace(/&#8211;/g, "-")
         .replace(/&#[0-9]+;/g, "")
-        .replace(/\r?\n|\r/g, " ")  
-        .replace(/\s+/g, " ")       
+        .replace(/\r?\n|\r/g, " ")
+        .replace(/\s+/g, " ")
         .replace(/<i[^>]*>(.*?)<\/i>/g, "$1")
-        .replace(/<b[^>]*>(.*?)<\/b>/g, "$1") 
+        .replace(/<b[^>]*>(.*?)<\/b>/g, "$1")
         .replace(/<[^>]+>/g, "")
-        .trim();                 
+        .trim();
 }
