@@ -1,0 +1,24 @@
+[
+{
+"name": "Animetsu Fixed",
+"id": 20112011,
+"baseUrl": "https://animetsu.net/",
+"lang": "en",
+"typeSource": "single",
+"iconUrl": "https://animetsu.net/apple-touch-icon.png",
+"dateFormat": "",
+"dateFormatLocale": "",
+"isNsfw": false,
+"hasCloudflare": true,
+"sourceCodeUrl": "https://raw.githubusercontent.com/2011aarav/animetsu-fixed/main/animetsu-fixed.js",
+"apiUrl": "https://animetsu.live/v2/api/",
+"version": "3.1.1",
+"isManga": false,
+"itemType": 1,
+"isFullData": false,
+"appMinVerReq": "0.5.0",
+"additionalParams": "",
+"sourceCodeLanguage": 1,
+"notes": "Animetsu download fix"
+}
+]
