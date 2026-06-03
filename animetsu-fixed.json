@@ -1,16 +1,16 @@
 {
 "sourceName": "Animetsu Fixed",
-"iconUrl": "https://animetsu.live/apple-touch-icon.png",
+"iconUrl": "https://animetsu.net/apple-touch-icon.png",
 "author": {
 "name": "You",
 "icon": ""
 },
-"version": "3.1.0",
+"version": "3.1.1",
 "language": "English (DUB/SUB)",
 "streamType": "HLS",
 "quality": "1080p",
-"baseUrl": "https://animetsu.to/",
-"searchBaseUrl": "https://animetsu.to/",
+"baseUrl": "https://animetsu.net/",
+"searchBaseUrl": "https://animetsu.net/",
 "scriptUrl": "https://raw.githubusercontent.com/2011aarav/animetsu-fixed/main/animetsu-fixed.js",
 "asyncJS": true,
 "type": "anime",
