@@ -1,17 +1,12 @@
 {
 "name": "Aarav Repo",
-"author": "Aarav",
-"version": "1.0.0",
 "sources": [
 {
 "sourceName": "Animetsu Fixed",
 "iconUrl": "https://animetsu.net/apple-touch-icon.png",
-"author": {
-"name": "You",
-"icon": ""
-},
+"author": "Aarav",
 "version": "3.1.1",
-"language": "English (DUB/SUB)",
+"language": "English",
 "streamType": "HLS",
 "quality": "1080p",
 "baseUrl": "https://animetsu.net/",
@@ -20,16 +15,7 @@
 "asyncJS": true,
 "type": "anime",
 "softsub": true,
-"downloadSupport": true,
-"note": "Download fixed",
-"supportsMojuru": true,
-"supportsDartotsu": true,
-"supportsSora": true,
-"supportsLuna": true,
-"supportsAnymex": true,
-"supportsTsumi": true,
-"supportsHiyoku": true,
-"supportsShirox": true
+"downloadSupport": true
 }
 ]
 }
